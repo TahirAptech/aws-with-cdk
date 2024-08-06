@@ -16,7 +16,7 @@ export const handler = async (event, context) => {
   console.log('event', event);
   const { eventTime, s3 } = event.Records[0];
   const bucket = s3.bucket.name;
-
+  const BUCKET_OUTPUT = process.env.BUCKET_OUTPUT;
   // Object key may have spaces or unicode non-ASCII characters
   const srcKey = decodeURIComponent(s3.object.key.replace(/\+/g, " "));
   const ext = srcKey.replace(/^.*\./, "").toLowerCase();
@@ -51,13 +51,13 @@ export const handler = async (event, context) => {
         // store new image in the destination bucket
         await S3.send(
           new PutObjectCommand({
-            Bucket: process.env.BUCKET_OUTPUT,
+            Bucket: BUCKET_OUTPUT,
             Key: destKey,
             Body: outputBuffer,
             ContentType,
           })
         );
-        const message = `Successfully resized ${bucket}/${srcKey} and uploaded to ${bucket}/${srcKey}`;
+        const message = `Successfully resized ${bucket}/${srcKey} and uploaded to ${BUCKET_OUTPUT}/${destKey}`;
         console.log(message);
     }
     return {
