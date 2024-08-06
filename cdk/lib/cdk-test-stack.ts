@@ -54,6 +54,32 @@ export class CdkTestStack extends cdk.Stack {
     cfnTestCDKBucket.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.RETAIN
     cfnTestCDKBucket.cfnOptions.updateReplacePolicy = cdk.CfnDeletionPolicy.RETAIN
 
+    // Create an S3 bucket
+    const resizeOutputBucket = new s3.Bucket(this, "resize-output-bucket", {
+      serverAccessLogsBucket: logsBucket,
+      serverAccessLogsPrefix: "resizeOutputBucket-logs/",
+      blockPublicAccess: new s3.BlockPublicAccess({
+        blockPublicAcls: true,
+        blockPublicPolicy: true,
+        ignorePublicAcls: true,
+        restrictPublicBuckets: true,
+      }),
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      cors: [
+        {
+          allowedMethods: [s3.HttpMethods.GET],
+          allowedOrigins: ["*"],
+          allowedHeaders: ["*"],
+          maxAge: 3000,
+        },
+      ],
+      versioned: true,
+      enforceSSL: true,
+    })
+    const cfnResizeOutputBucket = resizeOutputBucket.node.findChild("Resource") as s3.CfnBucket
+    cfnResizeOutputBucket.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.RETAIN
+    cfnResizeOutputBucket.cfnOptions.updateReplacePolicy = cdk.CfnDeletionPolicy.RETAIN
+
     //#region GetSignedUrl role and lambda By Tahir:
     const getSignedUrlRole = new iam.Role(this, "getSignedUrlRole", {
       assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
@@ -151,6 +177,11 @@ export class CdkTestStack extends cdk.Stack {
             resources: [`${testCDKBucket.bucketArn}/*`],
           }),
           new iam.PolicyStatement({
+            effect: iam.Effect.ALLOW,
+            actions: ["s3:PutObject","s3:GetObject"],
+            resources: [`${resizeOutputBucket.bucketArn}/*`],
+          }),
+          new iam.PolicyStatement({
             resources: [
               `arn:${cdk.Aws.PARTITION}:logs:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:log-group:/aws/lambda/*`,
             ],
@@ -165,9 +196,42 @@ export class CdkTestStack extends cdk.Stack {
     )
     s3LambdaTriggerPolicy.attachToRole(s3LambdaTriggerRole)
 
-    const s3LambdaTriggerLambda = new lambda.Function(
+    // const s3LambdaTriggerLambda = new lambda.Function(
+    //   this,
+    //   "s3LambdaTriggerLambdaPython",
+    //   {
+    //     runtime: lambda.Runtime.PYTHON_3_12,
+    //     handler: "index.handler",
+    //     functionName: `${cdk.Aws.STACK_NAME}-myS3LambdaTriggerPython`,
+    //     description: "s3LambdaTrigger Lambda function",
+    //     environment: {
+    //       AWS_REGION_NAME: cdk.Aws.REGION,
+    //     },
+    //     role: s3LambdaTriggerRole,
+    //     code: lambda.Code.fromAsset("../S3LambdaTriggerPython"),
+    //     timeout: cdk.Duration.seconds(29),
+    //   }
+    // )
+    // s3LambdaTriggerLambda.node.addDependency(s3LambdaTriggerRole)
+    // s3LambdaTriggerLambda.node.addDependency(s3LambdaTriggerPolicy)
+
+    // // now need to set s3 lambda trigger event:
+    // testCDKBucket.grantRead(s3LambdaTriggerLambda)
+
+    // const s3PutEventSource = new cdk.aws_lambda_event_sources.S3EventSource(
+    //   testCDKBucket,
+    //   {
+    //     events: [s3.EventType.OBJECT_CREATED_PUT],
+    //   }
+    // )
+    // s3LambdaTriggerLambda.addEventSource(s3PutEventSource)
+    //#endregion
+
+
+    //NodeJS
+    const s3LambdaTriggerLambdaNodeJS = new lambda.Function(
       this,
-      "s3LambdaTriggerLambda2",
+      "s3LambdaTriggerLambdaNodeJS",
       {
         runtime: lambda.Runtime.NODEJS_20_X,
         handler: "index.handler",
@@ -175,58 +239,25 @@ export class CdkTestStack extends cdk.Stack {
         description: "s3LambdaTrigger Lambda function",
         environment: {
           AWS_REGION_NAME: cdk.Aws.REGION,
+          BUCKET_OUTPUT: resizeOutputBucket.bucketName,
         },
         role: s3LambdaTriggerRole,
-        code: lambda.Code.fromAsset("../S3LambdaTrigger"),
+        code: lambda.Code.fromAsset("../S3LambdaTriggerNodeJS"),
         timeout: cdk.Duration.seconds(29),
       }
     )
-    s3LambdaTriggerLambda.node.addDependency(s3LambdaTriggerRole)
-    s3LambdaTriggerLambda.node.addDependency(s3LambdaTriggerPolicy)
+    s3LambdaTriggerLambdaNodeJS.node.addDependency(s3LambdaTriggerRole)
+    s3LambdaTriggerLambdaNodeJS.node.addDependency(s3LambdaTriggerPolicy)
 
-    // now need to set s3 lambda trigger event:
-    testCDKBucket.grantRead(s3LambdaTriggerLambda)
+    // now need to set s3 lambda trigger event for NodeJS:
+    testCDKBucket.grantRead(s3LambdaTriggerLambdaNodeJS)
 
-    const s3PutEventSource = new cdk.aws_lambda_event_sources.S3EventSource(
+    const s3PutEventSourceNodeJS = new cdk.aws_lambda_event_sources.S3EventSource(
       testCDKBucket,
       {
         events: [s3.EventType.OBJECT_CREATED_PUT],
       }
     )
-    s3LambdaTriggerLambda.addEventSource(s3PutEventSource)
-    //#endregion
-
-
-    //NodeJS
-    // const s3LambdaTriggerLambdaNodeJS = new lambda.Function(
-    //   this,
-    //   "s3LambdaTriggerLambdaNodeJS",
-    //   {
-    //     runtime: lambda.Runtime.NODEJS_20_X,
-    //     handler: "index.handler",
-    //     functionName: `${cdk.Aws.STACK_NAME}-myS3LambdaTriggerNodeJS`,
-    //     description: "s3LambdaTrigger Lambda function",
-    //     environment: {
-    //       AWS_REGION_NAME: cdk.Aws.REGION,
-    //     },
-    //     role: s3LambdaTriggerRole,
-    //     code: lambda.Code.fromAsset("../S3LambdaTrigger"),
-    //     timeout: cdk.Duration.seconds(29),
-    //   }
-    // )
-    // s3LambdaTriggerLambdaNodeJS.node.addDependency(s3LambdaTriggerRole)
-    // s3LambdaTriggerLambdaNodeJS.node.addDependency(s3LambdaTriggerPolicy)
-
-    // // now need to set s3 lambda trigger event for NodeJS:
-    // testCDKBucket.grantRead(s3LambdaTriggerLambdaNodeJS)
-
-    // const s3PutEventSourceNodeJS = new cdk.aws_lambda_event_sources.S3EventSource(
-    //   testCDKBucket,
-    //   {
-    //     events: [s3.EventType.OBJECT_CREATED_PUT],
-    //   }
-    // )
-    // s3LambdaTriggerLambdaNodeJS.addEventSource(s3PutEventSourceNodeJS)
-
+    s3LambdaTriggerLambdaNodeJS.addEventSource(s3PutEventSourceNodeJS)
   }
 }
