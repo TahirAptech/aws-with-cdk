@@ -6,7 +6,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "deploy": "npm run build && cdk deploy"
+    "deploy": "npm run build && cdk deploy",
+    "compile": "npm run build && cdk synth"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

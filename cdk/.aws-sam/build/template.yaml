@@ -1,0 +1,820 @@
+Resources:
+  Logs6819BB44:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: AES256
+      OwnershipControls:
+        Rules:
+        - ObjectOwnership: ObjectWriter
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: CdkTestStack/Logs/Resource
+  LogsPolicy90DB40C9:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:
+        Ref: Logs6819BB44
+      PolicyDocument:
+        Statement:
+        - Action: s3:*
+          Condition:
+            Bool:
+              aws:SecureTransport: 'false'
+          Effect: Deny
+          Principal:
+            AWS: '*'
+          Resource:
+          - Fn::GetAtt:
+            - Logs6819BB44
+            - Arn
+          - Fn::Join:
+            - ''
+            - - Fn::GetAtt:
+                - Logs6819BB44
+                - Arn
+              - /*
+        - Action: s3:PutObject
+          Condition:
+            ArnLike:
+              aws:SourceArn:
+                Fn::GetAtt:
+                - testCDKBucketA0923A7E
+                - Arn
+            StringEquals:
+              aws:SourceAccount:
+                Ref: AWS::AccountId
+          Effect: Allow
+          Principal:
+            Service: logging.s3.amazonaws.com
+          Resource:
+            Fn::Join:
+            - ''
+            - - Fn::GetAtt:
+                - Logs6819BB44
+                - Arn
+              - /testCDKBucket-logs/*
+        - Action: s3:PutObject
+          Condition:
+            ArnLike:
+              aws:SourceArn:
+                Fn::GetAtt:
+                - resizeoutputbucketF75F0C8B
+                - Arn
+            StringEquals:
+              aws:SourceAccount:
+                Ref: AWS::AccountId
+          Effect: Allow
+          Principal:
+            Service: logging.s3.amazonaws.com
+          Resource:
+            Fn::Join:
+            - ''
+            - - Fn::GetAtt:
+                - Logs6819BB44
+                - Arn
+              - /resizeOutputBucket-logs/*
+        Version: '2012-10-17'
+    Metadata:
+      aws:cdk:path: CdkTestStack/Logs/Policy/Resource
+  testCDKBucketA0923A7E:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: AES256
+      CorsConfiguration:
+        CorsRules:
+        - AllowedHeaders:
+          - '*'
+          AllowedMethods:
+          - GET
+          AllowedOrigins:
+          - '*'
+          MaxAge: 3000
+      LoggingConfiguration:
+        DestinationBucketName:
+          Ref: Logs6819BB44
+        LogFilePrefix: testCDKBucket-logs/
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: CdkTestStack/testCDKBucket/Resource
+  testCDKBucketPolicy87656534:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:
+        Ref: testCDKBucketA0923A7E
+      PolicyDocument:
+        Statement:
+        - Action: s3:*
+          Condition:
+            Bool:
+              aws:SecureTransport: 'false'
+          Effect: Deny
+          Principal:
+            AWS: '*'
+          Resource:
+          - Fn::GetAtt:
+            - testCDKBucketA0923A7E
+            - Arn
+          - Fn::Join:
+            - ''
+            - - Fn::GetAtt:
+                - testCDKBucketA0923A7E
+                - Arn
+              - /*
+        - Action: s3:GetObject
+          Condition:
+            StringEquals:
+              AWS:SourceArn:
+                Fn::Join:
+                - ''
+                - - 'arn:aws:cloudfront::'
+                  - Ref: AWS::AccountId
+                  - :distribution/
+                  - Ref: CloudFrontToS3CloudFrontDistribution241D9866
+          Effect: Allow
+          Principal:
+            Service: cloudfront.amazonaws.com
+          Resource:
+            Fn::Join:
+            - ''
+            - - Fn::GetAtt:
+                - testCDKBucketA0923A7E
+                - Arn
+              - /*
+        Version: '2012-10-17'
+    Metadata:
+      aws:cdk:path: CdkTestStack/testCDKBucket/Policy/Resource
+      cfn_nag:
+        rules_to_suppress:
+        - id: F16
+          reason: Public website bucket policy requires a wildcard principal
+  resizeoutputbucketF75F0C8B:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: AES256
+      CorsConfiguration:
+        CorsRules:
+        - AllowedHeaders:
+          - '*'
+          AllowedMethods:
+          - GET
+          AllowedOrigins:
+          - '*'
+          MaxAge: 3000
+      LoggingConfiguration:
+        DestinationBucketName:
+          Ref: Logs6819BB44
+        LogFilePrefix: resizeOutputBucket-logs/
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: CdkTestStack/resize-output-bucket/Resource
+  resizeoutputbucketPolicyBEF5362F:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:
+        Ref: resizeoutputbucketF75F0C8B
+      PolicyDocument:
+        Statement:
+        - Action: s3:*
+          Condition:
+            Bool:
+              aws:SecureTransport: 'false'
+          Effect: Deny
+          Principal:
+            AWS: '*'
+          Resource:
+          - Fn::GetAtt:
+            - resizeoutputbucketF75F0C8B
+            - Arn
+          - Fn::Join:
+            - ''
+            - - Fn::GetAtt:
+                - resizeoutputbucketF75F0C8B
+                - Arn
+              - /*
+        Version: '2012-10-17'
+    Metadata:
+      aws:cdk:path: CdkTestStack/resize-output-bucket/Policy/Resource
+  getSignedUrlRole3823F96F:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+        Version: '2012-10-17'
+    Metadata:
+      aws:cdk:path: CdkTestStack/getSignedUrlRole/Resource
+  GetSignedUrlPolicyD3AAD702:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+        - Action: s3:PutObject
+          Effect: Allow
+          Resource:
+            Fn::Join:
+            - ''
+            - - Fn::GetAtt:
+                - testCDKBucketA0923A7E
+                - Arn
+              - /*
+        - Action:
+          - logs:CreateLogGroup
+          - logs:CreateLogStream
+          - logs:PutLogEvents
+          Effect: Allow
+          Resource:
+            Fn::Join:
+            - ''
+            - - 'arn:'
+              - Ref: AWS::Partition
+              - ':logs:'
+              - Ref: AWS::Region
+              - ':'
+              - Ref: AWS::AccountId
+              - :log-group:/aws/lambda/*
+        Version: '2012-10-17'
+      PolicyName:
+        Fn::Join:
+        - ''
+        - - Ref: AWS::StackName
+          - -getSignedUrl-role
+      Roles:
+      - Ref: getSignedUrlRole3823F96F
+    Metadata:
+      aws:cdk:path: CdkTestStack/GetSignedUrlPolicy/Resource
+  MyFunctionServiceRole3C357FF2:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+        Version: '2012-10-17'
+      ManagedPolicyArns:
+      - Fn::Join:
+        - ''
+        - - 'arn:'
+          - Ref: AWS::Partition
+          - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    Metadata:
+      aws:cdk:path: CdkTestStack/MyFunction/ServiceRole/Resource
+  MyFunctionServiceRoleDefaultPolicyB705ABD4:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+        - Action:
+          - s3:Abort*
+          - s3:PutObject
+          - s3:PutObjectLegalHold
+          - s3:PutObjectRetention
+          - s3:PutObjectTagging
+          - s3:PutObjectVersionTagging
+          Effect: Allow
+          Resource:
+            Fn::Join:
+            - ''
+            - - Fn::GetAtt:
+                - testCDKBucketA0923A7E
+                - Arn
+              - /*
+        - Action:
+          - s3:Abort*
+          - s3:DeleteObject*
+          - s3:PutObject
+          - s3:PutObjectLegalHold
+          - s3:PutObjectRetention
+          - s3:PutObjectTagging
+          - s3:PutObjectVersionTagging
+          Effect: Allow
+          Resource:
+          - Fn::GetAtt:
+            - testCDKBucketA0923A7E
+            - Arn
+          - Fn::Join:
+            - ''
+            - - Fn::GetAtt:
+                - testCDKBucketA0923A7E
+                - Arn
+              - /*
+        Version: '2012-10-17'
+      PolicyName: MyFunctionServiceRoleDefaultPolicyB705ABD4
+      Roles:
+      - Ref: MyFunctionServiceRole3C357FF2
+    Metadata:
+      aws:cdk:path: CdkTestStack/MyFunction/ServiceRole/DefaultPolicy/Resource
+  MyFunction3BAA72D1:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code: MyFunction3BAA72D1
+      Environment:
+        Variables:
+          BUCKET_NAME:
+            Ref: testCDKBucketA0923A7E
+      Handler: index.handler
+      Role:
+        Fn::GetAtt:
+        - MyFunctionServiceRole3C357FF2
+        - Arn
+      Runtime: nodejs20.x
+    DependsOn:
+    - MyFunctionServiceRoleDefaultPolicyB705ABD4
+    - MyFunctionServiceRole3C357FF2
+    Metadata:
+      SamNormalized: true
+      SamResourceId: MyFunction
+      aws:asset:is-bundled: false
+      aws:asset:path: ..\..\asset.e826927951cc731f54792d995ec710f3e343698262e9b28fd55620859a8bab91
+      aws:asset:property: Code
+      aws:cdk:path: CdkTestStack/MyFunction/Resource
+  CachePolicy26D8A535:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        DefaultTTL: 86400
+        MaxTTL: 86400
+        MinTTL: 0
+        Name:
+          Fn::Join:
+          - ''
+          - - cp-
+            - Ref: AWS::Region
+            - '-'
+            - Ref: AWS::StackName
+        ParametersInCacheKeyAndForwardedToOrigin:
+          CookiesConfig:
+            CookieBehavior: none
+          EnableAcceptEncodingBrotli: false
+          EnableAcceptEncodingGzip: false
+          HeadersConfig:
+            HeaderBehavior: whitelist
+            Headers:
+            - Origin
+            - Access-Control-Request-Method
+            - Access-Control-Request-Headers
+          QueryStringsConfig:
+            QueryStringBehavior: none
+    Metadata:
+      aws:cdk:path: CdkTestStack/CachePolicy/Resource
+  CloudFrontToS3CloudFrontOacFB5D4E73:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Description: Origin access control provisioned by aws-cloudfront-s3
+        Name:
+          Fn::Join:
+          - ''
+          - - aws-cloudfront-s3-CloutToS3-
+            - Fn::Select:
+              - 2
+              - Fn::Split:
+                - /
+                - Ref: AWS::StackId
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+    Metadata:
+      aws:cdk:path: CdkTestStack/CloudFrontToS3/CloudFrontOac
+  CloudFrontToS3CloudFrontDistribution241D9866:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        DefaultCacheBehavior:
+          AllowedMethods:
+          - GET
+          - HEAD
+          CachePolicyId:
+            Ref: CachePolicy26D8A535
+          Compress: true
+          TargetOriginId: CdkTestStackCloudFrontToS3CloudFrontDistributionOrigin101FB6689
+          ViewerProtocolPolicy: redirect-to-https
+        DefaultRootObject: index.html
+        Enabled: true
+        HttpVersion: http2
+        IPV6Enabled: true
+        Logging:
+          Bucket:
+            Fn::GetAtt:
+            - Logs6819BB44
+            - RegionalDomainName
+          Prefix: cloudfront-logs/
+        Origins:
+        - DomainName:
+            Fn::GetAtt:
+            - testCDKBucketA0923A7E
+            - RegionalDomainName
+          Id: CdkTestStackCloudFrontToS3CloudFrontDistributionOrigin101FB6689
+          OriginAccessControlId:
+            Fn::GetAtt:
+            - CloudFrontToS3CloudFrontOacFB5D4E73
+            - Id
+          S3OriginConfig:
+            OriginAccessIdentity: ''
+        PriceClass: PriceClass_100
+    Metadata:
+      aws:cdk:path: CdkTestStack/CloudFrontToS3/CloudFrontDistribution/Resource
+      cfn_nag:
+        rules_to_suppress:
+        - id: W70
+          reason: Since the distribution uses the CloudFront domain name, CloudFront
+            automatically sets the security policy to TLSv1 regardless of the value
+            of MinimumProtocolVersion
+  s3LambdaTriggerRoleCBB794A7:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+        Version: '2012-10-17'
+    Metadata:
+      aws:cdk:path: CdkTestStack/s3LambdaTriggerRole/Resource
+  s3LambdaTriggerRoleDefaultPolicy33B65A6C:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+        - Action:
+          - s3:GetBucket*
+          - s3:GetObject*
+          - s3:List*
+          Effect: Allow
+          Resource:
+          - arn:aws:s3:::ws-on-aws-api-gwy
+          - arn:aws:s3:::ws-on-aws-api-gwy/*
+        Version: '2012-10-17'
+      PolicyName: s3LambdaTriggerRoleDefaultPolicy33B65A6C
+      Roles:
+      - Ref: s3LambdaTriggerRoleCBB794A7
+    Metadata:
+      aws:cdk:path: CdkTestStack/s3LambdaTriggerRole/DefaultPolicy/Resource
+  s3LambdaTriggerPolicyE4AE5918:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+        - Action:
+          - s3:GetObject
+          - s3:PutObject
+          Effect: Allow
+          Resource:
+          - Fn::Join:
+            - ''
+            - - Fn::GetAtt:
+                - resizeoutputbucketF75F0C8B
+                - Arn
+              - /*
+          - Fn::Join:
+            - ''
+            - - Fn::GetAtt:
+                - testCDKBucketA0923A7E
+                - Arn
+              - /*
+        - Action:
+          - logs:CreateLogGroup
+          - logs:CreateLogStream
+          - logs:PutLogEvents
+          Effect: Allow
+          Resource:
+            Fn::Join:
+            - ''
+            - - 'arn:'
+              - Ref: AWS::Partition
+              - ':logs:'
+              - Ref: AWS::Region
+              - ':'
+              - Ref: AWS::AccountId
+              - :log-group:/aws/lambda/*
+        Version: '2012-10-17'
+      PolicyName:
+        Fn::Join:
+        - ''
+        - - Ref: AWS::StackName
+          - -s3LambdaTrigger-role
+      Roles:
+      - Ref: s3LambdaTriggerRoleCBB794A7
+    Metadata:
+      aws:cdk:path: CdkTestStack/s3LambdaTriggerPolicy/Resource
+  s3LambdaTriggerLambdaNodeJSA9C2E0EE:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code: s3LambdaTriggerLambdaNodeJSA9C2E0EE
+      Description: s3LambdaTrigger Lambda function
+      Environment:
+        Variables:
+          AWS_REGION_NAME:
+            Ref: AWS::Region
+          BUCKET_OUTPUT:
+            Ref: resizeoutputbucketF75F0C8B
+      FunctionName:
+        Fn::Join:
+        - ''
+        - - Ref: AWS::StackName
+          - -myS3LambdaTriggerNodeJS
+      Handler: index.handler
+      Role:
+        Fn::GetAtt:
+        - s3LambdaTriggerRoleCBB794A7
+        - Arn
+      Runtime: nodejs20.x
+      Timeout: 29
+    DependsOn:
+    - s3LambdaTriggerPolicyE4AE5918
+    - s3LambdaTriggerRoleDefaultPolicy33B65A6C
+    - s3LambdaTriggerRoleCBB794A7
+    Metadata:
+      SamNormalized: true
+      SamResourceId: s3LambdaTriggerLambdaNodeJS
+      aws:asset:is-bundled: false
+      aws:asset:path: ..\..\asset.4f8de2e4d8ce7f2d058424faa3d18080f00244a2c204fb9de3c9946abd7b0407
+      aws:asset:property: Code
+      aws:cdk:path: CdkTestStack/s3LambdaTriggerLambdaNodeJS/Resource
+  ExistingBucketNotifications17FE3B82:
+    Type: Custom::S3BucketNotifications
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+        - BucketNotificationsHandler050a0587b7544547bf325f094a3db8347ECC3691
+        - Arn
+      BucketName: ws-on-aws-api-gwy
+      NotificationConfiguration:
+        LambdaFunctionConfigurations:
+        - Events:
+          - s3:ObjectCreated:Put
+          LambdaFunctionArn:
+            Fn::GetAtt:
+            - s3LambdaTriggerLambdaNodeJSA9C2E0EE
+            - Arn
+      Managed: false
+    DependsOn:
+    - ExistingBucketAllowBucketNotificationsToCdkTestStacks3LambdaTriggerLambdaNodeJS147D542358F3EC5F
+    Metadata:
+      aws:cdk:path: CdkTestStack/ExistingBucket/Notifications/Resource
+  ExistingBucketAllowBucketNotificationsToCdkTestStacks3LambdaTriggerLambdaNodeJS147D542358F3EC5F:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+        - s3LambdaTriggerLambdaNodeJSA9C2E0EE
+        - Arn
+      Principal: s3.amazonaws.com
+      SourceAccount:
+        Ref: AWS::AccountId
+      SourceArn: arn:aws:s3:::ws-on-aws-api-gwy
+    Metadata:
+      aws:cdk:path: CdkTestStack/ExistingBucket/AllowBucketNotificationsToCdkTestStacks3LambdaTriggerLambdaNodeJS147D5423
+  BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleB6FB88EC:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+        Version: '2012-10-17'
+      ManagedPolicyArns:
+      - Fn::Join:
+        - ''
+        - - 'arn:'
+          - Ref: AWS::Partition
+          - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    Metadata:
+      aws:cdk:path: CdkTestStack/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Role/Resource
+  BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleDefaultPolicy2CF63D36:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+        - Action:
+          - s3:GetBucketNotification
+          - s3:PutBucketNotification
+          Effect: Allow
+          Resource: '*'
+        Version: '2012-10-17'
+      PolicyName: BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleDefaultPolicy2CF63D36
+      Roles:
+      - Ref: BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleB6FB88EC
+    Metadata:
+      aws:cdk:path: CdkTestStack/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Role/DefaultPolicy/Resource
+  BucketNotificationsHandler050a0587b7544547bf325f094a3db8347ECC3691:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: AWS CloudFormation handler for "Custom::S3BucketNotifications"
+        resources (@aws-cdk/aws-s3)
+      Code:
+        ZipFile: "import boto3  # type: ignore\nimport json\nimport logging\nimport\
+          \ urllib.request\n\ns3 = boto3.client(\"s3\")\n\nEVENTBRIDGE_CONFIGURATION\
+          \ = 'EventBridgeConfiguration'\nCONFIGURATION_TYPES = [\"TopicConfigurations\"\
+          , \"QueueConfigurations\", \"LambdaFunctionConfigurations\"]\n\ndef handler(event:\
+          \ dict, context):\n  response_status = \"SUCCESS\"\n  error_message = \"\
+          \"\n  try:\n    props = event[\"ResourceProperties\"]\n    notification_configuration\
+          \ = props[\"NotificationConfiguration\"]\n    managed = props.get('Managed',\
+          \ 'true').lower() == 'true'\n    stack_id = event['StackId']\n    old =\
+          \ event.get(\"OldResourceProperties\", {}).get(\"NotificationConfiguration\"\
+          , {})\n    if managed:\n      config = handle_managed(event[\"RequestType\"\
+          ], notification_configuration)\n    else:\n      config = handle_unmanaged(props[\"\
+          BucketName\"], stack_id, event[\"RequestType\"], notification_configuration,\
+          \ old)\n    s3.put_bucket_notification_configuration(Bucket=props[\"BucketName\"\
+          ], NotificationConfiguration=config)\n  except Exception as e:\n    logging.exception(\"\
+          Failed to put bucket notification configuration\")\n    response_status\
+          \ = \"FAILED\"\n    error_message = f\"Error: {str(e)}. \"\n  finally:\n\
+          \    submit_response(event, context, response_status, error_message)\n\n\
+          def handle_managed(request_type, notification_configuration):\n  if request_type\
+          \ == 'Delete':\n    return {}\n  return notification_configuration\n\ndef\
+          \ handle_unmanaged(bucket, stack_id, request_type, notification_configuration,\
+          \ old):\n  def get_id(n):\n    n['Id'] = ''\n    strToHash=json.dumps(n,\
+          \ sort_keys=True).replace('\"Name\": \"prefix\"', '\"Name\": \"Prefix\"\
+          ').replace('\"Name\": \"suffix\"', '\"Name\": \"Suffix\"')\n    return f\"\
+          {stack_id}-{hash(strToHash)}\"\n  def with_id(n):\n    n['Id'] = get_id(n)\n\
+          \    return n\n\n  external_notifications = {}\n  existing_notifications\
+          \ = s3.get_bucket_notification_configuration(Bucket=bucket)\n  for t in\
+          \ CONFIGURATION_TYPES:\n    if request_type == 'Update':\n        old_incoming_ids\
+          \ = [get_id(n) for n in old.get(t, [])]\n        external_notifications[t]\
+          \ = [n for n in existing_notifications.get(t, []) if not get_id(n) in old_incoming_ids]\n\
+          \    elif request_type == 'Delete':\n        external_notifications[t] =\
+          \ [n for n in existing_notifications.get(t, []) if not n['Id'].startswith(f\"\
+          {stack_id}-\")]\n    elif request_type == 'Create':\n        external_notifications[t]\
+          \ = [n for n in existing_notifications.get(t, [])]\n  if EVENTBRIDGE_CONFIGURATION\
+          \ in existing_notifications:\n    external_notifications[EVENTBRIDGE_CONFIGURATION]\
+          \ = existing_notifications[EVENTBRIDGE_CONFIGURATION]\n\n  if request_type\
+          \ == 'Delete':\n    return external_notifications\n\n  notifications = {}\n\
+          \  for t in CONFIGURATION_TYPES:\n    external = external_notifications.get(t,\
+          \ [])\n    incoming = [with_id(n) for n in notification_configuration.get(t,\
+          \ [])]\n    notifications[t] = external + incoming\n\n  if EVENTBRIDGE_CONFIGURATION\
+          \ in notification_configuration:\n    notifications[EVENTBRIDGE_CONFIGURATION]\
+          \ = notification_configuration[EVENTBRIDGE_CONFIGURATION]\n  elif EVENTBRIDGE_CONFIGURATION\
+          \ in external_notifications:\n    notifications[EVENTBRIDGE_CONFIGURATION]\
+          \ = external_notifications[EVENTBRIDGE_CONFIGURATION]\n\n  return notifications\n\
+          \ndef submit_response(event: dict, context, response_status: str, error_message:\
+          \ str):\n  response_body = json.dumps(\n    {\n      \"Status\": response_status,\n\
+          \      \"Reason\": f\"{error_message}See the details in CloudWatch Log Stream:\
+          \ {context.log_stream_name}\",\n      \"PhysicalResourceId\": event.get(\"\
+          PhysicalResourceId\") or event[\"LogicalResourceId\"],\n      \"StackId\"\
+          : event[\"StackId\"],\n      \"RequestId\": event[\"RequestId\"],\n    \
+          \  \"LogicalResourceId\": event[\"LogicalResourceId\"],\n      \"NoEcho\"\
+          : False,\n    }\n  ).encode(\"utf-8\")\n  headers = {\"content-type\": \"\
+          \", \"content-length\": str(len(response_body))}\n  try:\n    req = urllib.request.Request(url=event[\"\
+          ResponseURL\"], headers=headers, data=response_body, method=\"PUT\")\n \
+          \   with urllib.request.urlopen(req) as response:\n      print(response.read().decode(\"\
+          utf-8\"))\n    print(\"Status code: \" + response.reason)\n  except Exception\
+          \ as e:\n      print(\"send(..) failed executing request.urlopen(..): \"\
+          \ + str(e))"
+      Handler: index.handler
+      Role:
+        Fn::GetAtt:
+        - BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleB6FB88EC
+        - Arn
+      Runtime: python3.11
+      Timeout: 300
+    DependsOn:
+    - BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleDefaultPolicy2CF63D36
+    - BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleB6FB88EC
+    Metadata:
+      aws:cdk:path: CdkTestStack/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Resource
+  CDKMetadata:
+    Type: AWS::CDK::Metadata
+    Properties:
+      Analytics: v2:deflate64:H4sIAAAAAAAA/11QTXPCIBD9Lb0TTE3tuZqO1zqxd4dsUNcQmGGhnQ7Dfy8QrU4vvH378XZ5Sx6eVzWvn8Q3VTCMlcKeh70TMLKUOgRqeNh4GKVj7VFfoxl2RiH83NNXPpONIBkZiomHziiZuwreh+YoMiWmfhA8bL0Gh0bn2mO8k3ZCosQio+YgiKQjvs7AQBk/HK3RjodWwFne5f/RD4sn1GsASdSmfmsUe0dyFnt/2/TIY2SdJOMtSFZ2JU+SwKl85FbIa4wesAyw15fk41s2kowqIsnS9DjrwdGiOPx3b5WMbTPbZvZp9k1k2gySX2jxtaz5KmldCLGyXjucJO9m/AXU2bLnsQEAAA==
+    Metadata:
+      aws:cdk:path: CdkTestStack/CDKMetadata/Default
+    Condition: CDKMetadataAvailable
+Conditions:
+  CDKMetadataAvailable:
+    Fn::Or:
+    - Fn::Or:
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - af-south-1
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - ap-east-1
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - ap-northeast-1
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - ap-northeast-2
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - ap-south-1
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - ap-southeast-1
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - ap-southeast-2
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - ca-central-1
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - cn-north-1
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - cn-northwest-1
+    - Fn::Or:
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - eu-central-1
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - eu-north-1
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - eu-south-1
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - eu-west-1
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - eu-west-2
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - eu-west-3
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - il-central-1
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - me-central-1
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - me-south-1
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - sa-east-1
+    - Fn::Or:
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - us-east-1
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - us-east-2
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - us-west-1
+      - Fn::Equals:
+        - Ref: AWS::Region
+        - us-west-2
+Parameters:
+  BootstrapVersion:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /cdk-bootstrap/hnb659fds/version
+    Description: Version of the CDK Bootstrap resources in this environment, automatically
+      retrieved from SSM Parameter Store. [cdk:skip]
+Rules:
+  CheckBootstrapVersion:
+    Assertions:
+    - Assert:
+        Fn::Not:
+        - Fn::Contains:
+          - - '1'
+            - '2'
+            - '3'
+            - '4'
+            - '5'
+          - Ref: BootstrapVersion
+      AssertDescription: CDK bootstrap stack version 6 required. Please run 'cdk bootstrap'
+        with a recent version of the CDK CLI.

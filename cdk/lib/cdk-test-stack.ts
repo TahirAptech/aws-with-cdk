@@ -5,6 +5,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront"
 import { CloudFrontToS3 } from "@aws-solutions-constructs/aws-cloudfront-s3"
+import { S3EventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 
 export class CdkTestStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -108,7 +109,7 @@ export class CdkTestStack extends cdk.Stack {
 
     // Create a Lambda function
     const lambdaFunction = new lambda.Function(this, 'MyFunction', {
-      runtime: lambda.Runtime.NODEJS_16_X,
+      runtime: lambda.Runtime.NODEJS_20_X,
       handler: 'index.handler',
       code: lambda.Code.fromAsset("../lambdaS3Upload"),
       environment: {
@@ -178,7 +179,7 @@ export class CdkTestStack extends cdk.Stack {
           }),
           new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
-            actions: ["s3:PutObject","s3:GetObject"],
+            actions: ["s3:PutObject", "s3:GetObject"],
             resources: [`${resizeOutputBucket.bucketArn}/*`],
           }),
           new iam.PolicyStatement({
@@ -249,15 +250,30 @@ export class CdkTestStack extends cdk.Stack {
     s3LambdaTriggerLambdaNodeJS.node.addDependency(s3LambdaTriggerRole)
     s3LambdaTriggerLambdaNodeJS.node.addDependency(s3LambdaTriggerPolicy)
 
-    // now need to set s3 lambda trigger event for NodeJS:
-    testCDKBucket.grantRead(s3LambdaTriggerLambdaNodeJS)
+    // Grant the Lambda function read access to the existing bucket
+    const existingBucket = s3.Bucket.fromBucketArn(this, 'ExistingBucket', "arn:aws:s3:::ws-on-aws-api-gwy");
+    existingBucket.grantRead(s3LambdaTriggerLambdaNodeJS);
 
+    // Set up the S3 event source for the Lambda function.
     const s3PutEventSourceNodeJS = new cdk.aws_lambda_event_sources.S3EventSource(
-      testCDKBucket,
+      existingBucket as s3.Bucket,
       {
         events: [s3.EventType.OBJECT_CREATED_PUT],
       }
     )
     s3LambdaTriggerLambdaNodeJS.addEventSource(s3PutEventSourceNodeJS)
+
+    /*
+     // now need to set s3 lambda trigger event for NodeJS:
+     testCDKBucket.grantRead(s3LambdaTriggerLambdaNodeJS)
+ 
+     const s3PutEventSourceNodeJS = new cdk.aws_lambda_event_sources.S3EventSource(
+       testCDKBucket,
+       {
+         events: [s3.EventType.OBJECT_CREATED_PUT],
+       }
+     )
+     s3LambdaTriggerLambdaNodeJS.addEventSource(s3PutEventSourceNodeJS)
+     */
   }
 }
